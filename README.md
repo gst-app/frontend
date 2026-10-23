@@ -1,35 +1,104 @@
-# React + TypeScript + Vite
+# GST Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+A React and TypeScript frontend built with Vite.
 
-Currently, two official plugins are available:
+## Requirements
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- Node.js 24.x
+- pnpm 12.14.x
 
-## React Compiler
+The repository specifies pnpm 12.14.0 through the `packageManager` field in
+`package.json`.
 
-The React Compiler is enabled on this template. See [this documentation](https://react.dev/learn/react-compiler) for more information.
+## Setup
 
-Note: This will impact Vite dev & build performances.
-You can also try [the experimental native React Compiler support in plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md#rust-react-compiler) by using `compiler: true` in the plugin options instead of using the Babel plugin.
+Install dependencies, create the environment files, and start the development
+server:
 
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```bash
+pnpm install
+cp .env.example .env
+cp .env.example .env.local
+pnpm dev
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+Set `VITE_API_BASE_URL` to configure the API base URL. Use `.env.local` for
+developer-specific local values. The `.env` and `.env.local` files are ignored
+and must not be committed. `.env.example` is the tracked environment template.
+
+## Scripts
+
+| Command | Description |
+| --- | --- |
+| `pnpm dev` | Starts the Vite development server with hot module replacement. |
+| `pnpm build` | Runs TypeScript validation and creates the production bundle. |
+| `pnpm lint` | Runs Oxlint. |
+| `pnpm format` | Formats supported files with Oxfmt. |
+| `pnpm format:check` | Checks formatting without modifying files. |
+| `pnpm preview` | Serves the production build locally after `pnpm build`. |
+| `pnpm prepare` | Initializes Husky after dependency installation. |
+
+## Git hooks and commit conventions
+
+The pre-commit hook in `.husky/pre-commit` runs `pnpm lint-staged`. Staged
+`js`, `jsx`, `ts`, and `tsx` files are processed with `oxlint --fix` and
+`oxfmt`.
+
+The commit-msg hook in `.husky/commit-msg` runs Commitlint against the commit
+message. Commitlint extends `@commitlint/config-conventional`.
+
+Commit messages use the following format:
+
+```text
+type(scope): subject
+```
+
+The scope is optional, and the subject comes after the colon. For example:
+
+```text
+feat: add account settings
+feat(chore): update project dependencies
+fix(auth): handle expired sessions
+docs: update project setup
+```
+
+Configured commit rules are:
+
+- Supported types include `feat`, `fix`, `chore`, `docs`, `style`, `refactor`,
+  `perf`, `test`, `build`, `ci`, and `revert`.
+- The subject must be lowercase.
+- The subject must be no longer than 100 characters.
+- Commit body lines must be no longer than 200 characters.
+
+## Folder structure
+
+The project is organized for scalable feature development:
+
+```text
+.
+├── public/
+├── src/
+│   ├── assets/
+│   ├── components/
+│   │   └── ui/
+│   ├── config/
+│   ├── features/
+│   │   └── auth/
+│   ├── hooks/
+│   ├── lib/
+│   ├── pages/
+│   ├── stores/
+│   ├── test/
+│   ├── types/
+│   ├── utils/
+│   ├── App.tsx
+│   ├── main.tsx
+│   ├── providers.tsx
+│   └── router.tsx
+├── .env.example
+├── components.json
+├── package.json
+├── pnpm-lock.yaml
+├── tsconfig*.json
+└── vite.config.ts
+```
