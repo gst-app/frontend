@@ -1,0 +1,4 @@
+export const ERROR_CODES = {
+  UNAUTHORIZED: "UNAUTHORIZED",
+  FORBIDDEN: "FORBIDDEN",
+} as const;
