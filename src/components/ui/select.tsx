@@ -59,20 +59,23 @@ function SelectContent({
   align = "center",
   alignOffset = 0,
   alignItemWithTrigger = true,
+  portalContainer,
+  collisionBoundary,
   ...props
 }: SelectPrimitive.Popup.Props &
   Pick<
     SelectPrimitive.Positioner.Props,
-    "align" | "alignOffset" | "side" | "sideOffset" | "alignItemWithTrigger"
-  >) {
+    "align" | "alignOffset" | "side" | "sideOffset" | "alignItemWithTrigger" | "collisionBoundary"
+  > & { portalContainer?: SelectPrimitive.Portal.Props["container"] }) {
   return (
-    <SelectPrimitive.Portal>
+    <SelectPrimitive.Portal container={portalContainer}>
       <SelectPrimitive.Positioner
         side={side}
         sideOffset={sideOffset}
         align={align}
         alignOffset={alignOffset}
         alignItemWithTrigger={alignItemWithTrigger}
+        collisionBoundary={collisionBoundary}
         className="isolate z-50"
       >
         <SelectPrimitive.Popup

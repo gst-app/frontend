@@ -1,52 +1,57 @@
-import { X } from "lucide-react";
-import { useNavigate } from "react-router";
-import Modal from "@/components/custom/modal";
-import { Button } from "@/components/ui/button";
+import { useLocation, useNavigate } from "react-router";
+import { useEffect } from "react";
 import { ROUTES } from "@/config/routes";
 import SignupForm from "@/features/auth/components/SignupForm";
-import { useMediaQuery } from "@/hooks/use-media-query";
+import AuthModal from "@/features/auth/components/AuthModal";
+import { User } from "lucide-react";
+import { forgotPasswordSchema } from "@/features/auth/schemas";
+import SuccessModal from "@/components/custom/success-modal";
+import { Button } from "@/components/ui/button";
 import AuthLayout from "@/layouts/AuthLayout";
 
 const SignupPage = () => {
-  const isMobile = useMediaQuery("(max-width: 1023px)");
   const navigate = useNavigate();
+  const { state } = useLocation();
+  const email = state?.signupEmail;
+  const signupComplete =
+    typeof email === "string" && forgotPasswordSchema.safeParse({ email }).success;
 
-  const closeModal = () => navigate(ROUTES.HOME);
+  useEffect(() => {
+    if (!signupComplete) return;
+    const timer = window.setTimeout(() => {
+      void navigate(ROUTES.LOGIN, { replace: true, state: null });
+    }, 3000);
+    return () => window.clearTimeout(timer);
+  }, [signupComplete, email, navigate]);
 
-  if (isMobile) {
-    return <SignupForm />;
+  if (signupComplete) {
+    const signIn = () => navigate(ROUTES.LOGIN, { replace: true, state: null });
+    return (
+      <>
+        <AuthLayout />
+        <SuccessModal
+          open
+          appearance="registration"
+          onOpenChange={(open) => {
+            if (!open) signIn();
+          }}
+          title="Account created!"
+          description={`Your account has been created. Check ${email} for a verification link before signing in.`}
+          icon={<User />}
+          action={
+            <Button size="lg" className="w-full normal-case shadow-md" onClick={signIn}>
+              Go to sign in
+            </Button>
+          }
+        />
+      </>
+    );
   }
 
   return (
-    <>
-      <AuthLayout />
-      <Modal
-        open
-        onOpenChange={(open) => {
-          if (!open) closeModal();
-        }}
-        width="4xl"
-        showCloseButton={false}
-        overlayClassName="bg-slate-900/25 backdrop-blur-md"
-        contentClassName="h-[min(760px,95dvh)] max-h-[95dvh] w-[calc(100%-2rem)] sm:!max-w-[956px] overflow-y-auto rounded-[40px] border-0 bg-white p-0 shadow-[0_12px_18px_rgb(17_24_39_/_24%)]"
-      >
-        <div className="relative h-full bg-white">
-          <div className="relative w-full overflow-y-auto">
-            <SignupForm />
-          </div>
-
-          <Button
-            type="button"
-            onClick={closeModal}
-            variant="ghost"
-            size="icon-sm"
-            icon={<X className="size-6.75 stroke-[1.7]" />}
-            className="absolute top-6.5 right-7.5 z-20 text-[#9ca3af] hover:text-slate-600 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-            aria-label="Close"
-          />
-        </div>
-      </Modal>
-    </>
+    <AuthModal className="w-full">
+      <SignupForm />
+    </AuthModal>
   );
 };
 
