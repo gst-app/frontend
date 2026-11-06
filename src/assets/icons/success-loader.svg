@@ -1,0 +1,50 @@
+<svg width="92" height="92" viewBox="0 0 92 92" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .sl-rise { animation: sl-rise 1.5s ease-out forwards; }
+    .sl-wave-back { animation: sl-sway-a 2s ease-in-out infinite; }
+    .sl-wave-front { animation: sl-sway-b 2s ease-in-out infinite; }
+
+    @keyframes sl-rise {
+      from { transform: translateY(44px); }
+      to { transform: translateY(0); }
+    }
+    @keyframes sl-sway-a {
+      0%, 100% { transform: translateX(-8px); }
+      50% { transform: translateX(8px); }
+    }
+    @keyframes sl-sway-b {
+      0%, 100% { transform: translateX(8px); }
+      50% { transform: translateX(-8px); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .sl-rise, .sl-wave-back, .sl-wave-front { animation: none; }
+    }
+  </style>
+  <g clip-path="url(#clip0_1498_3443)">
+    <path d="M91 46C91 70.8528 70.8528 91 46 91C21.1472 91 1 70.8528 1 46C1 21.1472 21.1472 1 46 1C70.8528 1 91 21.1472 91 46Z" stroke-width="2" stroke="#141414"/>
+    <mask id="mask0_1498_3443" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="11" y="11" width="70" height="70">
+      <circle cx="46" cy="46" r="34.5" fill="#141414"/>
+    </mask>
+    <g mask="url(#mask0_1498_3443)">
+      <g class="sl-rise">
+        <g clip-path="url(#clip1_1498_3443)">
+          <path class="sl-wave-back" opacity="0.5" d="M0 37.375C5.5456 37.375 10.8878 39.4637 14.9627 43.2252L20.6696 48.4931C27.9392 55.2035 39.1442 55.2035 46.4137 48.4931C53.3318 42.1072 63.8858 41.7587 71.21 47.6745L76.6653 52.0806C81.0068 55.5873 86.4191 57.5 92 57.5V80.5H0V37.375Z" fill="#42D25C"/>
+        </g>
+        <g clip-path="url(#clip2_1498_3443)">
+          <path class="sl-wave-front" d="M0 51.75H1.8345C6.30818 51.75 10.7286 50.7791 14.7905 48.9044L21.4427 45.8342C28.7668 42.4538 37.4059 43.817 43.3333 49.2884C51.6089 56.9274 64.5633 56.2058 71.9393 47.695L77.7262 41.0178C81.3139 36.8782 86.522 34.5 92 34.5V80.5H0V51.75Z" fill="#006E2F"/>
+        </g>
+      </g>
+    </g>
+  </g>
+  <defs>
+    <clipPath id="clip0_1498_3443">
+      <rect width="92" height="92" fill="white"/>
+    </clipPath>
+    <clipPath id="clip1_1498_3443">
+      <rect width="92" height="92" fill="white" transform="translate(0 -11.5)"/>
+    </clipPath>
+    <clipPath id="clip2_1498_3443">
+      <rect width="92" height="92" fill="white" transform="translate(0 -11.5)"/>
+    </clipPath>
+  </defs>
+</svg>

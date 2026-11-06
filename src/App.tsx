@@ -1,5 +1,4 @@
 import { RouterProvider } from "react-router";
-import "./App.css";
 import { router } from "@/router";
 import { OuterErrorBoundary } from "@/pages/GlobalErrorBoundary";
 import { useEffect } from "react";

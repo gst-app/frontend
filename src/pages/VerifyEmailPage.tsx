@@ -1,13 +1,13 @@
-import { LoaderCircle, Mail } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import { toast } from "sonner";
+import SuccessLoader from "@/assets/icons/success-loader.svg?react"; // adjust path
 import { Button } from "@/components/ui/button";
 import { ERROR_CODE } from "@/config/error-codes";
 import { ROUTES } from "@/config/routes";
-import { useVerifyEmail } from "@/features/auth/hooks/use-verify-email";
+import { useCountdown } from "@/hooks/use-countdown"; // adjust path
 import { useResendVerification } from "@/features/auth/hooks/use-resend-verification";
-import AuthModal from "@/features/auth/components/AuthModal";
+import { useVerifyEmail } from "@/features/auth/hooks/use-verify-email";
 import { forgotPasswordSchema } from "@/features/auth/schemas";
 import { getApiErrorCode, getApiErrorMessage } from "@/lib/api-error";
 
@@ -15,22 +15,22 @@ export default function VerifyEmailPage() {
   const [params] = useSearchParams();
   const navigate = useNavigate();
   const attemptedLink = useRef<{ email: string; token: string } | null>(null);
+  const [result, setResult] = useState<{ already: boolean } | null>(null);
+
   const email = params.get("email") ?? "";
   const token = params.get("token") ?? "";
-  const validEmail = forgotPasswordSchema.safeParse({ email }).success;
-  const validLink = validEmail && Boolean(token.trim());
+  const validLink = forgotPasswordSchema.safeParse({ email }).success && Boolean(token.trim());
 
-  const signIn = () => navigate(ROUTES.LOGIN, { replace: true, state: null });
+  const goToLogin = () => navigate(ROUTES.LOGIN, { replace: true, state: null });
 
-  const complete = (alreadyVerified = false) => {
-    toast.success(alreadyVerified ? "Email already verified" : "Email verified successfully");
-    void navigate(ROUTES.LOGIN, { replace: true, state: null });
-  };
-
-  const verify = useVerifyEmail(complete);
+  const verify = useVerifyEmail((alreadyVerified = false) =>
+    setResult({ already: alreadyVerified }),
+  );
   const resend = useResendVerification();
+  const resendCooldown = useCountdown(60, { autoStart: false });
   const { mutate } = verify;
 
+  // Run verification once per link
   useEffect(() => {
     if (
       !validLink ||
@@ -42,62 +42,84 @@ export default function VerifyEmailPage() {
     mutate({ email, token });
   }, [email, token, validLink, mutate]);
 
+  // Success: let the loader finish filling, then redirect
+  useEffect(() => {
+    if (!result) return;
+    const id = setTimeout(() => {
+      toast.success(result.already ? "Email already verified" : "Email verified successfully");
+      void navigate(ROUTES.LOGIN, { replace: true, state: null });
+    }, 1200);
+    return () => clearTimeout(id);
+  }, [result, navigate]);
+
+  // Incomplete or invalid link: nothing to do here, so send them to login
+  useEffect(() => {
+    if (validLink) return;
+    toast.error("This verification link is invalid. Sign in to request a new one.", {
+      id: "invalid-verify-link", // dedupes in React StrictMode
+    });
+    void navigate(ROUTES.LOGIN, { replace: true, state: null });
+  }, [validLink, navigate]);
+
+  if (!validLink) return null;
+
   const expired = getApiErrorCode(verify.error) === ERROR_CODE.INVALID_EXPIRED_TOKEN;
+
   return (
-    <AuthModal>
-      <section className="flex min-h-dvh flex-col items-center justify-center gap-6 p-6 text-center lg:min-h-full lg:p-12">
-        {validLink && !verify.isError ? (
-          <div role="status" className="flex flex-col items-center gap-4">
-            <LoaderCircle
-              aria-hidden="true"
-              className="size-16 text-primary motion-safe:animate-spin"
-            />
-            <span>Verifying your email…</span>
-          </div>
-        ) : (
-          <Mail aria-hidden="true" className="size-16 text-primary" />
-        )}
-        <h1 className="text-3xl">Verify your email</h1>
-        <p>
-          {validLink
-            ? `We will verify ${email} automatically and redirect you to sign in.`
-            : "This verification link is incomplete or invalid. Open the full link from your email."}
-        </p>
-        {validLink && verify.isError && !expired ? (
-          <Button
-            disabled={verify.isPending || resend.isPending}
-            onClick={() => verify.mutate({ email, token })}
-          >
-            Retry verification
-          </Button>
-        ) : null}
-        {verify.isError ? (
-          <p role="alert" className="text-sm text-destructive">
+    <main className="flex min-h-dvh flex-col items-center justify-center bg-white px-6 py-10 text-center">
+      <h1 className="sr-only">Verify your email</h1>
+
+      {!verify.isError ? (
+        <div role="status" className="flex flex-col items-center gap-8">
+          <SuccessLoader width={80} height={80} aria-hidden="true" />
+          <p className="font-heading text-lg text-black sm:text-xl">
+            {result ? "Email verified" : "Verifying your email…"}
+          </p>
+        </div>
+      ) : (
+        <div className="flex w-full max-w-sm flex-col items-center gap-4">
+          <h2 className="text-2xl font-semibold">
+            {expired ? "Link expired" : "Couldn't verify your email"}
+          </h2>
+          <p role="alert" className="text-sm text-muted-foreground">
             {expired
               ? "This link is invalid or has expired. Request a new verification email."
               : getApiErrorMessage(verify.error)}
           </p>
-        ) : null}
-        {validEmail ? (
-          <Button
-            variant="outline"
-            disabled={resend.isPending || verify.isPending}
-            onClick={() =>
-              resend.mutate({ email }, { onSuccess: (data) => toast.success(data.message) })
-            }
-          >
-            {resend.isPending ? "Sending…" : "Resend verification email"}
+
+          {expired ? (
+            <Button
+              disabled={resend.isPending || resendCooldown.isRunning}
+              onClick={() =>
+                resend.mutate(
+                  { email },
+                  {
+                    onSuccess: (data) => {
+                      toast.success(data.message);
+                      resendCooldown.restart();
+                    },
+                    onError: (error) => toast.error(getApiErrorMessage(error)),
+                  },
+                )
+              }
+            >
+              {resend.isPending
+                ? "Sending…"
+                : resendCooldown.isRunning
+                  ? `Resend in ${resendCooldown.remaining}s`
+                  : "Resend verification email"}
+            </Button>
+          ) : (
+            <Button disabled={verify.isPending} onClick={() => mutate({ email, token })}>
+              Retry verification
+            </Button>
+          )}
+
+          <Button variant="link" onClick={goToLogin}>
+            Go to sign in
           </Button>
-        ) : null}
-        {resend.isError ? (
-          <p role="alert" className="text-sm text-destructive">
-            {getApiErrorMessage(resend.error)}
-          </p>
-        ) : null}
-        <Button variant="ghost" onClick={signIn}>
-          Go to sign in
-        </Button>
-      </section>
-    </AuthModal>
+        </div>
+      )}
+    </main>
   );
 }

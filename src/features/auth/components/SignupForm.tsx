@@ -173,7 +173,7 @@ export default function SignupForm() {
               <CustomInput
                 id="signup-username"
                 placeholder="johndoe"
-                autoComplete="username"
+                autoComplete="name"
                 icon={<User />}
                 {...register("username")}
                 aria-invalid={!!errors.username}
@@ -281,7 +281,7 @@ export default function SignupForm() {
                     <SelectContent
                       align="start"
                       alignItemWithTrigger={false}
-                      portalContainer={selectBoundary}
+                      portalContainer={selectBoundary ?? undefined}
                       collisionBoundary={selectBoundary ?? undefined}
                       className="max-h-[min(240px,var(--available-height))]!"
                     >
@@ -335,7 +335,7 @@ export default function SignupForm() {
                     <SelectContent
                       align="start"
                       alignItemWithTrigger={false}
-                      portalContainer={selectBoundary}
+                      portalContainer={selectBoundary ?? undefined}
                       collisionBoundary={selectBoundary ?? undefined}
                       className="max-h-[min(240px,var(--available-height))]!"
                     >

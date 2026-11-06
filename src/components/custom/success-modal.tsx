@@ -32,7 +32,7 @@ export default function SuccessModal({
         description={description}
         overlayClassName="bg-slate-900/25 backdrop-blur-md motion-reduce:animate-none"
         headerClassName="relative text-center mt-auto gap-6 sm:gap-10 [&>h2]:text-3xl [&>h2]:font-semibold [&>h2]:leading-tight [&>h2]:text-primary sm:[&>h2]:text-[40px] [&>p]:text-lg [&>p]:leading-tight [&>p]:text-card-foreground [&>p]:break-words sm:[&>p]:text-[26px]"
-        contentClassName="isolate flex! h-[min(818px,calc(100dvh-2rem))] max-h-[calc(100dvh-2rem)] flex-col gap-8 overflow-x-hidden overflow-y-auto rounded-[40px] border-0 bg-card px-6 py-10 text-card-foreground ring-0 sm:!max-w-[588px] sm:rounded-[60px] sm:px-20 sm:py-14 [&>[data-slot=dialog-close]]:top-5 [&>[data-slot=dialog-close]]:right-5 [&>[data-slot=dialog-close]]:text-muted-foreground motion-reduce:animate-none"
+        contentClassName="isolate flex! h-[min(818px,calc(100dvh-2rem))] max-h-[calc(100dvh-2rem)] flex-col gap-8 overflow-x-hidden overflow-y-auto rounded-[40px] border-0 bg-card px-6 py-10 text-card-foreground ring-0 sm:!max-w-[448px] sm:rounded-[60px] sm:px-20 sm:py-14 [&>[data-slot=dialog-close]]:top-5 [&>[data-slot=dialog-close]]:right-5 [&>[data-slot=dialog-close]]:text-muted-foreground motion-reduce:animate-none"
       >
         <div
           aria-hidden="true"
@@ -78,7 +78,7 @@ export default function SuccessModal({
       title={title}
       description={description}
       headerClassName="relative z-10 text-center [&>h2]:text-3xl [&>h2]:leading-tight [&>p]:text-base [&>p]:leading-relaxed"
-      contentClassName="isolate max-h-[calc(100dvh-2rem)] overflow-x-hidden overflow-y-auto rounded-3xl bg-card p-8 text-card-foreground shadow-xl sm:!max-w-lg sm:p-12 motion-reduce:animate-none"
+      contentClassName="isolate max-h-[calc(100dvh-2rem)] overflow-x-hidden overflow-y-auto rounded-3xl bg-card p-8 text-card-foreground shadow-xl sm:!max-w-md sm:p-12 motion-reduce:animate-none"
     >
       <div
         aria-hidden="true"

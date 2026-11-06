@@ -18,7 +18,8 @@ const ResetPasswordPage = () => {
   const navigate = useNavigate();
 
   if ((state as ResetState | null)?.passwordReset === true) {
-    const goHome = () => navigate(ROUTES.HOME, { replace: true, state: null });
+    const goToLogin = () => navigate(ROUTES.LOGIN, { replace: true, state: null });
+
     return (
       <>
         <AuthLayout />
@@ -29,11 +30,11 @@ const ResetPasswordPage = () => {
           description="You have successfully reset and created a new password."
           icon={<Check />}
           onOpenChange={(open) => {
-            if (!open) goHome();
+            if (!open) goToLogin();
           }}
           action={
-            <Button size="lg" className="w-full normal-case shadow-md" onClick={goHome}>
-              Go to Home
+            <Button size="lg" className="w-full normal-case shadow-md" onClick={goToLogin}>
+              Go to Login
             </Button>
           }
         />
