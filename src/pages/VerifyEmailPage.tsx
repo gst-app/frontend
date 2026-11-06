@@ -56,7 +56,7 @@ export default function VerifyEmailPage() {
   useEffect(() => {
     if (validLink) return;
     toast.error("This verification link is invalid. Sign in to request a new one.", {
-      id: "invalid-verify-link", // dedupes in React StrictMode
+      id: "invalid-verify-link",
     });
     void navigate(ROUTES.LOGIN, { replace: true, state: null });
   }, [validLink, navigate]);

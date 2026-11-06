@@ -100,6 +100,7 @@ export type CreateNewPasswordValues = z.infer<typeof createNewPasswordSchema>;
 export interface LoginPayload {
   email: string;
   password: string;
+  rememberMe?: boolean;
 }
 
 export interface CreateUserPayload {
