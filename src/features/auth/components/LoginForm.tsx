@@ -1,41 +1,62 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeft, Eye, EyeOff, LockKeyhole, Mail } from "lucide-react";
+import { ArrowLeft, LockKeyhole, Mail } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router";
 import { toast } from "sonner";
 import { CustomInput } from "@/components/custom/custom-input";
+import { PasswordField } from "@/components/custom/password-field";
 import { ROUTES } from "@/config/routes";
 import googleIcon from "@/assets/icons/google-icon.svg";
-import { loginSchema, type LoginPayload, type LoginValues } from "@/features/auth/schemas";
+import { loginSchema, type LoginValues } from "@/features/auth/schemas";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-
-interface LoginFormProps {
-  onSubmitRequest?: (payload: LoginPayload) => void;
-}
+import { useLogin } from "@/features/auth/hooks/use-login";
+import { getApiErrorCode, getApiErrorMessage } from "@/lib/api-error";
+import { useResendVerification } from "@/features/auth/hooks/use-resend-verification";
+import { ERROR_CODE } from "@/config/error-codes";
 
 function ErrorMessage({ message }: { message?: string }) {
   return message ? <p className="mt-1 text-xs text-[#d92d20]">{message}</p> : null;
 }
 
-export default function LoginForm({ onSubmitRequest }: LoginFormProps) {
+export default function LoginForm() {
   const navigate = useNavigate();
-  const [showPassword, setShowPassword] = useState(false);
+  const login = useLogin();
+  const resend = useResendVerification();
+  const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null);
+
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    setError,
+    clearErrors,
+    formState: { errors, isSubmitting },
   } = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: { email: "", password: "", rememberMe: false },
   });
 
-  const onSubmit = ({ email, password }: LoginValues) => {
-    onSubmitRequest?.({ email, password });
+  const onSubmit = async ({ email, password }: LoginValues) => {
+    if (isSubmitting || login.isPending || resend.isPending) return;
 
-    if (!onSubmitRequest) {
-      toast.info("Sign in will be available once the account service is connected.");
+    clearErrors();
+    setUnverifiedEmail(null);
+    resend.reset();
+
+    try {
+      const result = await login.mutateAsync({ email, password });
+
+      if (result.status === "mfa_required") {
+        setError("root", {
+          message:
+            "This account requires multi-factor authentication. That feature is not available here yet.",
+        });
+      }
+    } catch (error) {
+      if (getApiErrorCode(error) === ERROR_CODE.EMAIL_UNVERIFIED) setUnverifiedEmail(email);
+
+      toast.error(getApiErrorMessage(error));
     }
   };
 
@@ -86,42 +107,20 @@ export default function LoginForm({ onSubmitRequest }: LoginFormProps) {
             <ErrorMessage message={errors.email?.message} />
           </div>
 
-          <div className="">
-            <label htmlFor="login-password" className="block mb-2.25">
-              Password
-            </label>
-            <div className="relative">
-              <CustomInput
-                id="login-password"
-                type={showPassword ? "text" : "password"}
-                placeholder="••••••••"
-                autoComplete="current-password"
-                icon={<LockKeyhole />}
-                {...register("password")}
-                aria-invalid={!!errors.password}
-              />
-              <Button
-                type="button"
-                onClick={() => setShowPassword((visible) => !visible)}
-                variant="ghost"
-                size="icon"
-                icon={
-                  showPassword ? (
-                    <Eye className="size-5 stroke-[1.8]" />
-                  ) : (
-                    <EyeOff className="size-5 stroke-[1.8]" />
-                  )
-                }
-                aria-label={showPassword ? "Hide password" : "Show password"}
-                className="absolute inset-y-0 right-2.5 h-13.5 w-7 self-end text-[#344054]"
-              />
-            </div>
-            <ErrorMessage message={errors.password?.message} />
-          </div>
+          <PasswordField
+            id="login-password"
+            label="Password"
+            autoComplete="current-password"
+            icon={<LockKeyhole />}
+            registration={register("password")}
+            error={errors.password?.message}
+          />
 
           <div className="flex items-center justify-between text-base leading-5 lg:col-span-2">
             <label className="flex items-center gap-2">
               <Checkbox
+                disabled
+                aria-describedby="remember-me-description"
                 className="size-5 accent-[#319765] rounded-md"
                 {...register("rememberMe")}
               />
@@ -130,7 +129,6 @@ export default function LoginForm({ onSubmitRequest }: LoginFormProps) {
             <Link to={ROUTES.FORGOT_PASSWORD}>
               <Button
                 type="button"
-                onClick={() => toast.info("Password recovery will be available soon.")}
                 variant="ghost"
                 className="h-auto rounded px-1 text-sm font-bold text-[#007b37] italic hover:bg-transparent! hover:text-[#007b37]/90"
               >
@@ -138,6 +136,34 @@ export default function LoginForm({ onSubmitRequest }: LoginFormProps) {
               </Button>
             </Link>
           </div>
+          {/* <p id="remember-me-description" className="text-xs text-muted-foreground">
+            Remember me will be available after the session service is updated.
+          </p> */}
+          {errors.root?.message ? (
+            <p role="alert" className="text-sm text-destructive">
+              {errors.root.message}
+            </p>
+          ) : null}
+          {unverifiedEmail ? (
+            <div className="space-y-2">
+              <Button
+                type="button"
+                variant="outline"
+                disabled={resend.isPending || isSubmitting}
+                onClick={() =>
+                  resend.mutate(
+                    { email: unverifiedEmail },
+                    {
+                      onSuccess: (data) => toast.success(data.message),
+                      onError: (error) => toast.error(getApiErrorMessage(error)),
+                    },
+                  )
+                }
+              >
+                {resend.isPending ? "Sending…" : "Resend verification email"}
+              </Button>
+            </div>
+          ) : null}
 
           <div className="md:px-6 space-y-8 mt-11 lg:mt-12">
             <div className="flex items-center gap-2.5 text-[13px] text-[#667085] lg:col-span-2 ">
@@ -159,13 +185,14 @@ export default function LoginForm({ onSubmitRequest }: LoginFormProps) {
         </div>
       </div>
 
-      <div className="mt-16 flex justify-center lg:px-0  md:px-6">
+      <div className="mt-12 flex justify-center lg:px-0  md:px-6">
         <Button
           type="submit"
+          disabled={isSubmitting || login.isPending || resend.isPending}
           size="lg"
           className="text-lg shadow-[0_3px_3px_rgb(0_77_31/65%)] transition active:translate-y-0.5 active:shadow-none lg:uppercase w-full lg:w-xs min-w-fit mx-auto [animation-timing-function:linear] animation-duration-[300ms] font-body"
         >
-          Sign in
+          {isSubmitting || login.isPending ? "Signing in…" : "Sign in"}
         </Button>
       </div>
     </form>

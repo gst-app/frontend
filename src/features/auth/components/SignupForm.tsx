@@ -1,34 +1,57 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeft, Eye, EyeOff, LockKeyhole, Mail, User } from "lucide-react";
-import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { ArrowLeft, LoaderCircle, LockKeyhole, Mail, User } from "lucide-react";
+import { useRef, useState } from "react";
+import { Controller, useForm, useWatch } from "react-hook-form";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import { CustomInput } from "@/components/custom/custom-input";
+import { PasswordField } from "@/components/custom/password-field";
 import { CustomSelect } from "@/components/custom/custom-select";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { ROUTES } from "@/config/routes";
-import { signupSchema, type CreateUserPayload, type SignupValues } from "@/features/auth/schemas";
+import { signupSchema, type SignupValues } from "@/features/auth/schemas";
 import Layers from "@/assets/icons/layers.svg?react";
 import House from "@/assets/icons/house.svg?react";
 import googleIcon from "@/assets/icons/google-icon.svg";
-
-interface SignupFormProps {
-  onSubmitRequest?: (payload: CreateUserPayload) => void;
-}
+import { FACULTIES, getDepartmentsByFaculty } from "@/config/academic";
+import { useSignup } from "@/features/auth/hooks/use-signup";
+import { getApiErrorCode, getApiErrorMessage, getApiFieldErrors } from "@/lib/api-error";
+import { ERROR_CODE } from "@/config/error-codes";
 
 function ErrorMessage({ message }: { message?: string }) {
   return message ? <p className="mt-1 text-xs text-[#d92d20]">{message}</p> : null;
 }
 
-export default function SignupForm({ onSubmitRequest }: SignupFormProps) {
+export default function SignupForm() {
   const navigate = useNavigate();
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const signup = useSignup();
+  const formRef = useRef<HTMLFormElement>(null);
+  const [selectBoundary, setSelectBoundary] = useState<HTMLElement | null>(null);
+
+  const onSelectOpenChange = (open: boolean) => {
+    if (open) {
+      setSelectBoundary(
+        formRef.current?.closest<HTMLElement>('[data-slot="dialog-content"]') ?? null,
+      );
+    }
+  };
+
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    control,
+    setValue,
+    setError,
+    clearErrors,
+    reset,
+    formState: { errors, isSubmitting },
   } = useForm<SignupValues>({
     resolver: zodResolver(signupSchema),
     defaultValues: {
@@ -42,7 +65,10 @@ export default function SignupForm({ onSubmitRequest }: SignupFormProps) {
     },
   });
 
-  const onSubmit = ({
+  const faculty = useWatch({ control, name: "faculty" });
+  const departments = getDepartmentsByFaculty(faculty);
+
+  const onSubmit = async ({
     username,
     email,
     password,
@@ -50,20 +76,70 @@ export default function SignupForm({ onSubmitRequest }: SignupFormProps) {
     department,
     faculty,
   }: SignupValues) => {
-    onSubmitRequest?.({
+    if (isSubmitting || signup.isPending) return;
+
+    clearErrors();
+
+    const selectedFaculty = FACULTIES.find((item) => item.id === faculty);
+    const selectedDepartment = getDepartmentsByFaculty(faculty).find(
+      (item) => item.id === department,
+    );
+    if (!selectedFaculty) {
+      setError("faculty", { message: "Select a valid faculty" });
+      return;
+    }
+    if (!selectedDepartment) {
+      setError("department", { message: "Select a department belonging to your faculty" });
+      return;
+    }
+
+    const payload = {
       username,
       email,
       password,
-      academicInfo: { academicLevel, department, faculty },
-    });
+      academicInfo: {
+        academicLevel,
+        department: selectedDepartment.name,
+        faculty: selectedFaculty.name,
+      },
+    };
 
-    if (!onSubmitRequest) {
-      toast.info("Account creation will be available once the account service is connected.");
+    try {
+      await signup.mutateAsync(payload);
+      reset();
+
+      navigate(ROUTES.SIGNUP, { replace: true, state: { signupEmail: email } });
+    } catch (error) {
+      for (const [name, message] of Object.entries(getApiFieldErrors(error))) {
+        const field = name.replace(/^academicInfo\./, "");
+
+        if (
+          field === "username" ||
+          field === "email" ||
+          field === "password" ||
+          field === "confirmPassword" ||
+          field === "academicLevel" ||
+          field === "department" ||
+          field === "faculty"
+        )
+          setError(field, { message });
+      }
+
+      const code = getApiErrorCode(error);
+
+      if (code === ERROR_CODE.EMAIL_TAKEN)
+        setError("email", { message: getApiErrorMessage(error) });
+
+      if (code === ERROR_CODE.USERNAME_TAKEN)
+        setError("username", { message: getApiErrorMessage(error) });
+
+      setError("root", { message: getApiErrorMessage(error) });
     }
   };
 
   return (
     <form
+      ref={formRef}
       onSubmit={handleSubmit(onSubmit)}
       className="relative flex min-h-dvh w-full flex-col bg-white  lg:bg-transparent md:p-8 md:py-6 p-6"
     >
@@ -126,70 +202,23 @@ export default function SignupForm({ onSubmitRequest }: SignupFormProps) {
             <h2 className="mb-6 text-sm leading-4 font-bold tracking-[0.02em] text-[#374151] uppercase">
               Security
             </h2>
-            <div>
-              <label htmlFor="signup-password" className="mb-2.25 block">
-                Password
-              </label>
-              <div className="relative">
-                <CustomInput
-                  id="signup-password"
-                  type={showPassword ? "text" : "password"}
-                  placeholder="••••••••"
-                  autoComplete="new-password"
-                  icon={<LockKeyhole />}
-                  {...register("password")}
-                  aria-invalid={!!errors.password}
-                />
-                <Button
-                  type="button"
-                  onClick={() => setShowPassword((visible) => !visible)}
-                  variant="ghost"
-                  size="icon"
-                  icon={
-                    showPassword ? (
-                      <Eye className="size-5 stroke-[1.8]" />
-                    ) : (
-                      <EyeOff className="size-5 stroke-[1.8]" />
-                    )
-                  }
-                  aria-label={showPassword ? "Hide password" : "Show password"}
-                  className="absolute inset-y-0 right-2.5 h-13.5 w-7 text-[#374151]"
-                />
-              </div>
-              <ErrorMessage message={errors.password?.message} />
-            </div>
+            <PasswordField
+              id="signup-password"
+              label="Password"
+              autoComplete="new-password"
+              icon={<LockKeyhole />}
+              registration={register("password")}
+              error={errors.password?.message}
+            />
 
-            <div>
-              <label htmlFor="signup-confirm-password" className="mb-2.25 block">
-                Confirm password
-              </label>
-              <div className="relative">
-                <CustomInput
-                  id="signup-confirm-password"
-                  type={showConfirmPassword ? "text" : "password"}
-                  placeholder="••••••••"
-                  autoComplete="new-password"
-                  icon={<LockKeyhole />}
-                  aria-invalid={!!errors.confirmPassword}
-                />
-                <Button
-                  type="button"
-                  onClick={() => setShowConfirmPassword((visible) => !visible)}
-                  variant="ghost"
-                  size="icon"
-                  icon={
-                    showConfirmPassword ? (
-                      <Eye className="size-5 stroke-[1.8]" />
-                    ) : (
-                      <EyeOff className="size-5 stroke-[1.8]" />
-                    )
-                  }
-                  aria-label={showConfirmPassword ? "Hide password" : "Show password"}
-                  className="absolute inset-y-0 right-2.5 h-[54px] w-7 text-[#374151]"
-                />
-              </div>
-              <ErrorMessage message={errors.confirmPassword?.message} />
-            </div>
+            <PasswordField
+              id="signup-confirm-password"
+              label="Confirm password"
+              autoComplete="new-password"
+              icon={<LockKeyhole />}
+              registration={register("confirmPassword")}
+              error={errors.confirmPassword?.message}
+            />
           </div>
         </div>
 
@@ -215,44 +244,115 @@ export default function SignupForm({ onSubmitRequest }: SignupFormProps) {
                 <option value="300_level">300 level</option>
                 <option value="400_level">400 level</option>
                 <option value="500_level">500 level</option>
+                <option value="postgraduate">Postgraduate</option>
               </CustomSelect>
               <ErrorMessage message={errors.academicLevel?.message} />
-            </div>
-
-            <div>
-              <label htmlFor="signup-department" className="mt-4.25 mb-2.25 block  leading-5">
-                Department
-              </label>
-              <CustomSelect
-                id="signup-department"
-                icon={<House />}
-                {...register("department")}
-                aria-invalid={!!errors.department}
-              >
-                <option value="">Computer Science</option>
-                <option value="computer-science">Computer Science</option>
-                <option value="business">Business Administration</option>
-                <option value="engineering">Engineering</option>
-              </CustomSelect>
-              <ErrorMessage message={errors.department?.message} />
             </div>
 
             <div>
               <label htmlFor="signup-faculty" className="mt-4.25 mb-2.25 block  leading-5">
                 Faculty
               </label>
-              <CustomSelect
-                id="signup-faculty"
-                icon={<House />}
-                {...register("faculty")}
-                aria-invalid={!!errors.faculty}
-              >
-                <option value="">Physical Sciences</option>
-                <option value="physical-sciences">Physical Sciences</option>
-                <option value="arts">Arts</option>
-                <option value="social-sciences">Social Sciences</option>
-              </CustomSelect>
+              <Controller
+                name="faculty"
+                control={control}
+                render={({ field }) => (
+                  <Select
+                    name={field.name}
+                    value={field.value || null}
+                    items={FACULTIES.map((item) => ({ value: item.id, label: item.name }))}
+                    disabled={isSubmitting || signup.isPending}
+                    onOpenChange={onSelectOpenChange}
+                    onValueChange={(value) => {
+                      field.onChange(value ?? "");
+                      setValue("department", "", { shouldValidate: true });
+                    }}
+                  >
+                    <SelectTrigger
+                      id="signup-faculty"
+                      ref={field.ref}
+                      onBlur={field.onBlur}
+                      aria-invalid={!!errors.faculty}
+                      className="h-11! w-full min-w-0 gap-2 bg-accent data-placeholder:bg-muted text-base md:text-sm"
+                    >
+                      <House aria-hidden="true" className="size-4 text-muted-foreground" />
+                      <SelectValue placeholder="Select your faculty" />
+                    </SelectTrigger>
+                    <SelectContent
+                      align="start"
+                      alignItemWithTrigger={false}
+                      portalContainer={selectBoundary}
+                      collisionBoundary={selectBoundary ?? undefined}
+                      className="max-h-[min(240px,var(--available-height))]!"
+                    >
+                      {FACULTIES.map((item) => (
+                        <SelectItem
+                          key={item.id}
+                          value={item.id}
+                          className="[&>span]:min-w-0 [&>span]:whitespace-normal! [&>span]:wrap-break-word"
+                        >
+                          {item.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
               <ErrorMessage message={errors.faculty?.message} />
+            </div>
+
+            <div>
+              <label htmlFor="signup-department" className="mt-4.25 mb-2.25 block  leading-5">
+                Department
+              </label>
+              <Controller
+                name="department"
+                control={control}
+                render={({ field }) => (
+                  <Select
+                    name={field.name}
+                    value={field.value || null}
+                    items={departments.map((item) => ({ value: item.id, label: item.name }))}
+                    disabled={!faculty || isSubmitting || signup.isPending}
+                    onOpenChange={onSelectOpenChange}
+                    onValueChange={(value) =>
+                      setValue("department", value ?? "", {
+                        shouldValidate: true,
+                        shouldDirty: true,
+                      })
+                    }
+                  >
+                    <SelectTrigger
+                      id="signup-department"
+                      ref={field.ref}
+                      onBlur={field.onBlur}
+                      aria-invalid={!!errors.department}
+                      className="h-11! w-full min-w-0 gap-2 bg-accent data-placeholder:bg-muted text-base md:text-sm"
+                    >
+                      <House aria-hidden="true" className="size-4 text-muted-foreground" />
+                      <SelectValue placeholder="Select your department" />
+                    </SelectTrigger>
+                    <SelectContent
+                      align="start"
+                      alignItemWithTrigger={false}
+                      portalContainer={selectBoundary}
+                      collisionBoundary={selectBoundary ?? undefined}
+                      className="max-h-[min(240px,var(--available-height))]!"
+                    >
+                      {departments.map((item) => (
+                        <SelectItem
+                          key={item.id}
+                          value={item.id}
+                          className="[&>span]:min-w-0 [&>span]:whitespace-normal! [&>span]:wrap-break-word"
+                        >
+                          {item.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+              <ErrorMessage message={errors.department?.message} />
             </div>
           </div>
           <div className="space-y-5">
@@ -274,12 +374,21 @@ export default function SignupForm({ onSubmitRequest }: SignupFormProps) {
           </div>
         </div>
 
+        {errors.root?.message ? (
+          <p role="alert" className="mt-4 text-sm text-destructive">
+            {errors.root.message}
+          </p>
+        ) : null}
         <Button
           type="submit"
+          disabled={isSubmitting || signup.isPending}
           size="lg"
           className="mt-6 flex w-full items-center justify-center  text-lg shadow-[0_3px_3px_rgb(0_77_31/65%)] transition active:translate-y-0.5 active:shadow-none lg:uppercase md:w-xs min-w-fit mx-auto [animation-timing-function:linear] animation-duration-[300ms] font-body"
         >
-          Create account
+          {isSubmitting || signup.isPending ? (
+            <LoaderCircle aria-hidden="true" className="size-5 motion-safe:animate-spin" />
+          ) : null}
+          {isSubmitting || signup.isPending ? "Creating account…" : "Create account"}
         </Button>
       </div>
     </form>
