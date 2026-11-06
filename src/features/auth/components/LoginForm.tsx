@@ -15,6 +15,7 @@ import { useLogin } from "@/features/auth/hooks/use-login";
 import { getApiErrorCode, getApiErrorMessage } from "@/lib/api-error";
 import { useResendVerification } from "@/features/auth/hooks/use-resend-verification";
 import { ERROR_CODE } from "@/config/error-codes";
+import { useCountdown } from "@/hooks/use-countdown";
 
 function ErrorMessage({ message }: { message?: string }) {
   return message ? <p className="mt-1 text-xs text-[#d92d20]">{message}</p> : null;
@@ -25,6 +26,7 @@ export default function LoginForm() {
   const login = useLogin();
   const resend = useResendVerification();
   const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null);
+  const cooldown = useCountdown(60, { autoStart: false });
 
   const {
     register,
@@ -148,19 +150,27 @@ export default function LoginForm() {
             <div className="space-y-2">
               <Button
                 type="button"
-                variant="outline"
-                disabled={resend.isPending || isSubmitting}
+                variant="link"
+                className="h-auto p-0"
+                disabled={resend.isPending || isSubmitting || cooldown.isRunning}
                 onClick={() =>
                   resend.mutate(
                     { email: unverifiedEmail },
                     {
-                      onSuccess: (data) => toast.success(data.message),
+                      onSuccess: (data) => {
+                        toast.success(data.message);
+                        cooldown.restart();
+                      },
                       onError: (error) => toast.error(getApiErrorMessage(error)),
                     },
                   )
                 }
               >
-                {resend.isPending ? "Sending…" : "Resend verification email"}
+                {resend.isPending
+                  ? "Sending…"
+                  : cooldown.isRunning
+                    ? `Resend in ${cooldown.remaining}s`
+                    : "Resend verification email"}
               </Button>
             </div>
           ) : null}

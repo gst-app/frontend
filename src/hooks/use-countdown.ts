@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 
-export function useCountdown(seconds: number) {
-  const [remaining, setRemaining] = useState(seconds);
+export function useCountdown(seconds: number, { autoStart = true } = {}) {
+  const [remaining, setRemaining] = useState(autoStart ? seconds : 0);
 
   useEffect(() => {
     if (remaining <= 0) return;
