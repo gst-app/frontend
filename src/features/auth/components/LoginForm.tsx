@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, LockKeyhole, Mail } from "lucide-react";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router";
 import { toast } from "sonner";
 import { CustomInput } from "@/components/custom/custom-input";
@@ -29,6 +29,7 @@ export default function LoginForm() {
   const cooldown = useCountdown(60, { autoStart: false });
 
   const {
+    control,
     register,
     handleSubmit,
     setError,
@@ -39,7 +40,7 @@ export default function LoginForm() {
     defaultValues: { email: "", password: "", rememberMe: false },
   });
 
-  const onSubmit = async ({ email, password }: LoginValues) => {
+  const onSubmit = async ({ email, password, rememberMe }: LoginValues) => {
     if (isSubmitting || login.isPending || resend.isPending) return;
 
     clearErrors();
@@ -47,7 +48,7 @@ export default function LoginForm() {
     resend.reset();
 
     try {
-      const result = await login.mutateAsync({ email, password });
+      const result = await login.mutateAsync({ email, password, rememberMe });
 
       if (result.status === "mfa_required") {
         setError("root", {
@@ -120,11 +121,20 @@ export default function LoginForm() {
 
           <div className="flex items-center justify-between text-base leading-5 lg:col-span-2">
             <label className="flex items-center gap-2">
-              <Checkbox
-                disabled
-                aria-describedby="remember-me-description"
-                className="size-5 accent-[#319765] rounded-md"
-                {...register("rememberMe")}
+              <Controller
+                control={control}
+                name="rememberMe"
+                render={({ field }) => (
+                  <Checkbox
+                    checked={field.value}
+                    name={field.name}
+                    onBlur={field.onBlur}
+                    onCheckedChange={(checked) => field.onChange(checked === true)}
+                    ref={field.ref}
+                    aria-describedby="remember-me-description"
+                    className="size-5 accent-[#319765] rounded-md"
+                  />
+                )}
               />
               <span className="text-sm">Remember me</span>
             </label>

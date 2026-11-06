@@ -3,15 +3,18 @@ import { ArrowLeft, Mail } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router";
 import { useForgotPassword } from "@/features/auth/hooks/use-forgot-password";
-import { getApiErrorMessage, getApiFieldErrors } from "@/lib/api-error";
+import { getApiErrorMessage, getApiFieldErrors, getRetryAfterSeconds } from "@/lib/api-error";
 import { CustomInput } from "@/components/custom/custom-input";
 import { ROUTES } from "@/config/routes";
 import { forgotPasswordSchema, type ForgotPasswordValues } from "@/features/auth/schemas";
 import { Button } from "@/components/ui/button";
+import { useCountdown } from "@/hooks/use-countdown";
 
 function ErrorMessage({ message }: { message?: string }) {
   return message ? <p className="mt-1 text-xs text-[#d92d20]">{message}</p> : null;
 }
+
+const formatWait = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 
 export default function ForgotPasswordForm() {
   const navigate = useNavigate();
@@ -28,8 +31,10 @@ export default function ForgotPasswordForm() {
     defaultValues: { email: "" },
   });
 
+  const retryCooldown = useCountdown(0, { autoStart: false });
+
   const onSubmit = async ({ email }: ForgotPasswordValues) => {
-    if (isSubmitting || forgotPassword.isPending) return;
+    if (isSubmitting || forgotPassword.isPending || retryCooldown.isRunning) return;
 
     clearErrors();
 
@@ -38,10 +43,18 @@ export default function ForgotPasswordForm() {
 
       navigate(`${ROUTES.FORGOT_PASSWORD_VERIFY_OTP}?email=${encodeURIComponent(email)}`);
     } catch (error) {
+      const retryAfter = getRetryAfterSeconds(error);
+
+      if (retryAfter) {
+        retryCooldown.restart(retryAfter);
+        setError("root", { message: "Too many attempts. Please wait before trying again." });
+
+        return;
+      }
+
       const fields = getApiFieldErrors(error);
 
       if (fields.email) setError("email", { message: fields.email });
-
       setError("root", { message: getApiErrorMessage(error) });
     }
   };
@@ -110,11 +123,15 @@ export default function ForgotPasswordForm() {
       <div className="flex justify-center max-lg:mt-auto md:px-6 lg:row-start-3 lg:mt-0 lg:self-end lg:px-0">
         <Button
           type="submit"
-          disabled={isSubmitting || forgotPassword.isPending}
+          disabled={isSubmitting || forgotPassword.isPending || retryCooldown.isRunning}
           size="lg"
           className="text-lg shadow-[0_3px_3px_rgb(0_77_31/65%)] transition active:translate-y-0.5 active:shadow-none lg:uppercase w-full lg:w-xs min-w-fit mx-auto [animation-timing-function:linear] animation-duration-[300ms] font-body"
         >
-          {isSubmitting || forgotPassword.isPending ? "Sending code…" : "Continue"}
+          {isSubmitting || forgotPassword.isPending
+            ? "Sending code…"
+            : retryCooldown.isRunning
+              ? `Try again in ${formatWait(retryCooldown.remaining)}`
+              : "Continue"}
         </Button>
       </div>
     </form>

@@ -37,3 +37,17 @@ export function getApiFieldErrors(error: unknown): Record<string, string> {
 
   return fields;
 }
+
+export function getRetryAfterSeconds(error: unknown): number | null {
+  if (!isAxiosError(error) || error.response?.status !== 429) return null;
+
+  const raw = error.response.headers?.["retry-after"];
+  if (!raw) return null;
+
+  const seconds = Number(raw);
+  if (Number.isFinite(seconds)) return Math.max(0, Math.ceil(seconds));
+
+  // Retry-After can also be an HTTP date
+  const date = Date.parse(raw);
+  return Number.isNaN(date) ? null : Math.max(0, Math.ceil((date - Date.now()) / 1000));
+}

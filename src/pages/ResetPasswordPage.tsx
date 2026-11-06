@@ -1,13 +1,11 @@
 import { Navigate, useLocation, useNavigate } from "react-router";
-import { Check } from "lucide-react";
-import SuccessModal from "@/components/custom/success-modal";
-import { Button } from "@/components/ui/button";
 import AuthLayout from "@/layouts/AuthLayout";
 import { ROUTES } from "@/config/routes";
 import CreateNewPasswordForm from "@/features/auth/components/CreateNewPasswordForm";
 import type { ResetPasswordPayload } from "@/features/auth/schemas";
 import { forgotPasswordSchema, verifyOtpSchema } from "@/features/auth/schemas";
 import AuthModal from "@/features/auth/components/AuthModal";
+import ResetPasswordSuccessModal from "@/features/auth/components/ResetPasswordSuccessModal";
 
 type ResetState = Partial<Pick<ResetPasswordPayload, "email" | "token">> & {
   passwordReset?: boolean;
@@ -23,20 +21,11 @@ const ResetPasswordPage = () => {
     return (
       <>
         <AuthLayout />
-        <SuccessModal
+        <ResetPasswordSuccessModal
           open
-          appearance="password-reset"
-          title="Welcome Back!"
-          description="You have successfully reset and created a new password."
-          icon={<Check />}
           onOpenChange={(open) => {
             if (!open) goToLogin();
           }}
-          action={
-            <Button size="lg" className="w-full normal-case shadow-md" onClick={goToLogin}>
-              Go to Login
-            </Button>
-          }
         />
       </>
     );
