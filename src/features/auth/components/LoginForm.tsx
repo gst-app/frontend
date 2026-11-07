@@ -12,10 +12,11 @@ import { loginSchema, type LoginValues } from "@/features/auth/schemas";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useLogin } from "@/features/auth/hooks/use-login";
-import { getApiErrorCode, getApiErrorMessage } from "@/lib/api-error";
+import { getApiErrorCode, getApiErrorMessage, getRetryAfterSeconds } from "@/lib/api-error";
 import { useResendVerification } from "@/features/auth/hooks/use-resend-verification";
 import { ERROR_CODE } from "@/config/error-codes";
 import { useCountdown } from "@/hooks/use-countdown";
+import { formatWait } from "@/utils/time";
 
 function ErrorMessage({ message }: { message?: string }) {
   return message ? <p className="mt-1 text-xs text-[#d92d20]">{message}</p> : null;
@@ -27,6 +28,7 @@ export default function LoginForm() {
   const resend = useResendVerification();
   const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null);
   const cooldown = useCountdown(60, { autoStart: false });
+  const retryCooldown = useCountdown(0, { autoStart: false });
 
   const {
     control,
@@ -41,7 +43,7 @@ export default function LoginForm() {
   });
 
   const onSubmit = async ({ email, password, rememberMe }: LoginValues) => {
-    if (isSubmitting || login.isPending || resend.isPending) return;
+    if (isSubmitting || login.isPending || resend.isPending || retryCooldown.isRunning) return;
 
     clearErrors();
     setUnverifiedEmail(null);
@@ -57,6 +59,15 @@ export default function LoginForm() {
         });
       }
     } catch (error) {
+      const retryAfter = getRetryAfterSeconds(error);
+
+      if (retryAfter) {
+        retryCooldown.restart(retryAfter);
+        setError("root", { message: "Too many attempts. Please wait before trying again." });
+
+        return;
+      }
+
       if (getApiErrorCode(error) === ERROR_CODE.EMAIL_UNVERIFIED) setUnverifiedEmail(email);
 
       toast.error(getApiErrorMessage(error));
@@ -208,11 +219,15 @@ export default function LoginForm() {
       <div className="mt-12 flex justify-center lg:px-0  md:px-6">
         <Button
           type="submit"
-          disabled={isSubmitting || login.isPending || resend.isPending}
+          disabled={isSubmitting || login.isPending || resend.isPending || retryCooldown.isRunning}
           size="lg"
           className="text-lg shadow-[0_3px_3px_rgb(0_77_31/65%)] transition active:translate-y-0.5 active:shadow-none lg:uppercase w-full lg:w-xs min-w-fit mx-auto [animation-timing-function:linear] animation-duration-[300ms] font-body"
         >
-          {isSubmitting || login.isPending ? "Signing in…" : "Sign in"}
+          {isSubmitting || login.isPending
+            ? "Signing in…"
+            : retryCooldown.isRunning
+              ? `Try again in ${formatWait(retryCooldown.remaining)}`
+              : "Sign in"}
         </Button>
       </div>
     </form>

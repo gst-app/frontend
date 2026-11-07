@@ -8,24 +8,23 @@ import { Button } from "@/components/ui/button";
 import { ROUTES } from "@/config/routes";
 import { OTP_LENGTH, verifyOtpSchema, type VerifyOtpValues } from "@/features/auth/schemas";
 import { useCountdown } from "@/hooks/use-countdown";
-import { useSearchParams } from "react-router";
 import { useForgotPassword } from "@/features/auth/hooks/use-forgot-password";
 import { getApiErrorMessage } from "@/lib/api-error";
 
 const RESEND_SECONDS = 60;
 
 interface VerifyOtpFormProps {
+  email: string;
   onSubmitRequest: (values: VerifyOtpValues) => void;
   onResend?: () => void;
 }
 
 export default function ForgotPasswordVerifyOtpForm({
+  email,
   onResend,
   onSubmitRequest,
 }: VerifyOtpFormProps) {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const email = searchParams.get("email") ?? "";
   const resend = useForgotPassword();
   const { remaining, isRunning, restart } = useCountdown(RESEND_SECONDS);
   const {

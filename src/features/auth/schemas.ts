@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { FACULTIES, getDepartmentsByFaculty } from "@/config/academic";
 
-const emailField = z
+export const emailSchema = z
   .email("Enter a valid email address")
   .trim()
   .min(1, "Email is required")
@@ -20,7 +20,7 @@ const confirmPasswordField = z
 export const OTP_LENGTH = 5;
 
 export const loginSchema = z.object({
-  email: emailField,
+  email: emailSchema,
   password: passwordField,
   rememberMe: z.boolean(),
 });
@@ -33,7 +33,7 @@ export const signupSchema = z
       .min(3, "Username must be at least 3 characters")
       .max(50, "Username must be 50 characters or fewer")
       .regex(/^[a-zA-Z0-9_]+$/, "Username may only contain letters, numbers, and underscores"),
-    email: emailField,
+    email: emailSchema,
     academicLevel: z
       .string()
       .refine(
@@ -72,7 +72,7 @@ export const signupSchema = z
     },
   );
 
-export const forgotPasswordSchema = z.object({ email: emailField });
+export const forgotPasswordSchema = z.object({ email: emailSchema });
 
 export const verifyOtpSchema = z.object({
   otp: z
