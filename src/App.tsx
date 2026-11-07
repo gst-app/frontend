@@ -4,10 +4,13 @@ import { OuterErrorBoundary } from "@/pages/GlobalErrorBoundary";
 import { useEffect } from "react";
 import { initializeAuth } from "@/features/auth/api/initialize-auth";
 import { API_CONFIGURATION_ERROR } from "@/lib/api-client";
+import { ROUTES } from "@/config/routes";
 
 function App() {
   useEffect(() => {
-    if (!API_CONFIGURATION_ERROR) void initializeAuth();
+    if (!API_CONFIGURATION_ERROR && window.location.pathname !== ROUTES.GOOGLE_CALLBACK) {
+      void initializeAuth();
+    }
   }, []);
   if (API_CONFIGURATION_ERROR)
     return (

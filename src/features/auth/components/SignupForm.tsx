@@ -22,6 +22,7 @@ import House from "@/assets/icons/house.svg?react";
 import googleIcon from "@/assets/icons/google-icon.svg";
 import { FACULTIES, getDepartmentsByFaculty } from "@/config/academic";
 import { useSignup } from "@/features/auth/hooks/use-signup";
+import { startGoogleAuth } from "@/features/auth/api/auth.api";
 import {
   getApiErrorCode,
   getApiErrorMessage,
@@ -379,7 +380,8 @@ export default function SignupForm() {
 
             <Button
               type="button"
-              onClick={() => toast.info("Google sign in will be available soon.")}
+              onClick={startGoogleAuth}
+              disabled={isSubmitting || signup.isPending}
               variant="outline"
               icon={<img src={googleIcon} alt="" className="size-6" />}
               className="h-13.75 w-full gap-4 rounded-full border-[#EFEFEF] bg-white! text-base text-[#111827] shadow-[0_1px_2.5px_#EFEFEF] hover:bg-slate-50! focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 lg:col-span-2"

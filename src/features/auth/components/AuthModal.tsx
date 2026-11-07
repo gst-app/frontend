@@ -36,9 +36,9 @@ export default function AuthModal({ children, className }: AuthModalProps) {
         width="4xl"
         showCloseButton={false}
         overlayClassName="bg-slate-900/25 backdrop-blur-md"
-        contentClassName="h-[min(760px,95dvh)] max-h-[95dvh] w-[calc(100%-2rem)] sm:!max-w-[956px] overflow-y-auto rounded-[40px] border-0 bg-white p-0 shadow-[0_12px_18px_rgb(17_24_39_/_24%)]"
+        contentClassName="h-[min(760px,95dvh)] max-h-[95dvh] w-[calc(100%-2rem)] sm:!max-w-[956px] overflow-y-auto rounded-[40px] border-0 bg-white p-0 shadow-[0_12px_18px_rgb(17_24_39_/_24%)] box-border"
       >
-        <div className="relative h-full bg-white">
+        <div className="relative h-full bg-white box-border">
           <div className={cn("relative h-full overflow-y-auto!", className)}>{children}</div>
 
           <Button

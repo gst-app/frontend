@@ -74,6 +74,28 @@ export const signupSchema = z
 
 export const forgotPasswordSchema = z.object({ email: emailSchema });
 
+export const onboardingSchema = z
+  .object({
+    username: signupSchema.shape.username,
+    academicLevel: signupSchema.shape.academicLevel,
+    faculty: signupSchema.shape.faculty,
+    department: signupSchema.shape.department,
+  })
+  .refine((values) => FACULTIES.some((faculty) => faculty.id === values.faculty), {
+    message: "Select a valid faculty",
+    path: ["faculty"],
+  })
+  .refine(
+    (values) =>
+      getDepartmentsByFaculty(values.faculty).some(
+        (department) => department.id === values.department,
+      ),
+    {
+      message: "Select a department belonging to your faculty",
+      path: ["department"],
+    },
+  );
+
 export const verifyOtpSchema = z.object({
   otp: z
     .string()
@@ -93,6 +115,7 @@ export const createNewPasswordSchema = z
 
 export type LoginValues = z.infer<typeof loginSchema>;
 export type SignupValues = z.infer<typeof signupSchema>;
+export type OnboardingValues = z.infer<typeof onboardingSchema>;
 export type ForgotPasswordValues = z.infer<typeof forgotPasswordSchema>;
 export type VerifyOtpValues = z.infer<typeof verifyOtpSchema>;
 export type CreateNewPasswordValues = z.infer<typeof createNewPasswordSchema>;
@@ -117,6 +140,8 @@ export interface CreateUserPayload {
 export interface ForgotPasswordPayload {
   email: string;
 }
+
+export type OnboardingPayload = Pick<CreateUserPayload, "username" | "academicInfo">;
 
 export interface ResetPasswordPayload {
   email: string;
