@@ -1,6 +1,8 @@
 export const ROUTES = {
   HOME: "/",
   LOGIN: "/auth/login",
+  GOOGLE_CALLBACK: "/auth/google/callback",
+  ONBOARDING: "/auth/onboarding",
   DASHBOARD: "/dashboard",
   VERIFY_EMAIL: "/auth/verify-email",
   SIGNUP: "/auth/signup",

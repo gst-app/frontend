@@ -12,6 +12,15 @@ import GuestRoute from "@/features/auth/components/GuestRoute";
 import ProtectedRoute from "@/features/auth/components/ProtectedRoute";
 import DashboardHome from "@/pages/dashboard";
 import VerifyEmailPage from "@/pages/VerifyEmailPage";
+import GoogleCallbackPage from "@/pages/GoogleCallbackPage";
+import OnboardingPage from "@/pages/OnboardingPage";
+
+if (window.location.pathname === ROUTES.GOOGLE_CALLBACK && window.location.hash) {
+  const mfaRequired =
+    new URLSearchParams(window.location.hash.slice(1)).get("status") === "mfa_required";
+  const search = mfaRequired ? "?status=mfa_required" : "?status=invalid";
+  window.history.replaceState(null, "", `${ROUTES.GOOGLE_CALLBACK}${search}`);
+}
 
 export const router = createBrowserRouter([
   {
@@ -21,9 +30,13 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <HomePage /> },
       { path: ROUTES.VERIFY_EMAIL, element: <VerifyEmailPage /> },
+      { path: ROUTES.GOOGLE_CALLBACK, element: <GoogleCallbackPage /> },
       {
         element: <ProtectedRoute />,
-        children: [{ path: ROUTES.DASHBOARD, element: <DashboardHome /> }],
+        children: [
+          { path: ROUTES.DASHBOARD, element: <DashboardHome /> },
+          { path: ROUTES.ONBOARDING, element: <OnboardingPage /> },
+        ],
       },
       {
         element: <GuestRoute />,
