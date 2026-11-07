@@ -9,12 +9,11 @@ import { ROUTES } from "@/config/routes";
 import { forgotPasswordSchema, type ForgotPasswordValues } from "@/features/auth/schemas";
 import { Button } from "@/components/ui/button";
 import { useCountdown } from "@/hooks/use-countdown";
+import { formatWait } from "@/utils/time";
 
 function ErrorMessage({ message }: { message?: string }) {
   return message ? <p className="mt-1 text-xs text-[#d92d20]">{message}</p> : null;
 }
-
-const formatWait = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 
 export default function ForgotPasswordForm() {
   const navigate = useNavigate();

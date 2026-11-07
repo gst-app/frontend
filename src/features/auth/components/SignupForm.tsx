@@ -22,8 +22,15 @@ import House from "@/assets/icons/house.svg?react";
 import googleIcon from "@/assets/icons/google-icon.svg";
 import { FACULTIES, getDepartmentsByFaculty } from "@/config/academic";
 import { useSignup } from "@/features/auth/hooks/use-signup";
-import { getApiErrorCode, getApiErrorMessage, getApiFieldErrors } from "@/lib/api-error";
+import {
+  getApiErrorCode,
+  getApiErrorMessage,
+  getApiFieldErrors,
+  getRetryAfterSeconds,
+} from "@/lib/api-error";
 import { ERROR_CODE } from "@/config/error-codes";
+import { useCountdown } from "@/hooks/use-countdown";
+import { formatWait } from "@/utils/time";
 
 function ErrorMessage({ message }: { message?: string }) {
   return message ? <p className="mt-1 text-xs text-[#d92d20]">{message}</p> : null;
@@ -34,6 +41,7 @@ export default function SignupForm() {
   const signup = useSignup();
   const formRef = useRef<HTMLFormElement>(null);
   const [selectBoundary, setSelectBoundary] = useState<HTMLElement | null>(null);
+  const retryCooldown = useCountdown(0, { autoStart: false });
 
   const onSelectOpenChange = (open: boolean) => {
     if (open) {
@@ -76,7 +84,7 @@ export default function SignupForm() {
     department,
     faculty,
   }: SignupValues) => {
-    if (isSubmitting || signup.isPending) return;
+    if (isSubmitting || signup.isPending || retryCooldown.isRunning) return;
 
     clearErrors();
 
@@ -110,6 +118,15 @@ export default function SignupForm() {
 
       navigate(ROUTES.SIGNUP, { replace: true, state: { signupEmail: email } });
     } catch (error) {
+      const retryAfter = getRetryAfterSeconds(error);
+
+      if (retryAfter) {
+        retryCooldown.restart(retryAfter);
+        setError("root", { message: "Too many attempts. Please wait before trying again." });
+
+        return;
+      }
+
       for (const [name, message] of Object.entries(getApiFieldErrors(error))) {
         const field = name.replace(/^academicInfo\./, "");
 
@@ -129,11 +146,9 @@ export default function SignupForm() {
 
       if (code === ERROR_CODE.EMAIL_TAKEN)
         setError("email", { message: getApiErrorMessage(error) });
-
-      if (code === ERROR_CODE.USERNAME_TAKEN)
+      else if (code === ERROR_CODE.USERNAME_TAKEN)
         setError("username", { message: getApiErrorMessage(error) });
-
-      setError("root", { message: getApiErrorMessage(error) });
+      else toast.error(getApiErrorMessage(error));
     }
   };
 
@@ -381,14 +396,18 @@ export default function SignupForm() {
         ) : null}
         <Button
           type="submit"
-          disabled={isSubmitting || signup.isPending}
+          disabled={isSubmitting || signup.isPending || retryCooldown.isRunning}
           size="lg"
           className="mt-6 flex w-full items-center justify-center  text-lg shadow-[0_3px_3px_rgb(0_77_31/65%)] transition active:translate-y-0.5 active:shadow-none lg:uppercase md:w-xs min-w-fit mx-auto [animation-timing-function:linear] animation-duration-[300ms] font-body"
         >
           {isSubmitting || signup.isPending ? (
             <LoaderCircle aria-hidden="true" className="size-5 motion-safe:animate-spin" />
           ) : null}
-          {isSubmitting || signup.isPending ? "Creating account…" : "Create account"}
+          {isSubmitting || signup.isPending
+            ? "Creating account…"
+            : retryCooldown.isRunning
+              ? `Try again in ${formatWait(retryCooldown.remaining)}`
+              : "Create account"}
         </Button>
       </div>
     </form>
