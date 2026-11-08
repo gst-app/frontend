@@ -5,7 +5,7 @@ import Modal from "@/components/custom/modal";
 import { Button } from "@/components/ui/button";
 import { ROUTES } from "@/config/routes";
 import { useMediaQuery } from "@/hooks/use-media-query";
-import AuthLayout from "@/layouts/AuthLayout";
+import AuthLayout from "@/components/layouts/AuthLayout";
 import { cn } from "cn";
 
 interface AuthModalProps {

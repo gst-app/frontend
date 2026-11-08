@@ -4,7 +4,7 @@ import { ROUTES } from "@/config/routes";
 import SignupForm from "@/features/auth/components/SignupForm";
 import AuthModal from "@/features/auth/components/AuthModal";
 import { forgotPasswordSchema } from "@/features/auth/schemas";
-import AuthLayout from "@/layouts/AuthLayout";
+import AuthLayout from "@/components/layouts/AuthLayout";
 import SignupSuccessModal from "@/features/auth/components/SignupSuccessModal";
 
 const SignupPage = () => {

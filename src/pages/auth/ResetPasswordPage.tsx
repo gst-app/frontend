@@ -1,5 +1,5 @@
 import { Navigate, useLocation, useNavigate } from "react-router";
-import AuthLayout from "@/layouts/AuthLayout";
+import AuthLayout from "@/components/layouts/AuthLayout";
 import { ROUTES } from "@/config/routes";
 import CreateNewPasswordForm from "@/features/auth/components/CreateNewPasswordForm";
 import type { ResetPasswordPayload } from "@/features/auth/schemas";
