@@ -1,3 +1,4 @@
+// pages/GlobalErrorBoundary.tsx
 import { AlertTriangle, Home, RefreshCw } from "lucide-react";
 import { Component, type ErrorInfo, type ReactNode } from "react";
 import { isRouteErrorResponse, useNavigate, useRouteError } from "react-router";
@@ -5,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { isDevelopment } from "@/config/environment";
 
 type ErrorPageProps = {
-  status: number;
+  status?: number;
   title: string;
   message: string;
   details?: string;
@@ -22,7 +23,7 @@ const ErrorPage = ({ status, title, message, details, onHome, onRetry }: ErrorPa
             <AlertTriangle aria-hidden="true" className="size-8" />
           </div>
           <p className="text-sm font-bold uppercase tracking-[0.25em] text-primary">
-            Error {status}
+            {status ? `Error ${status}` : "Update available"}
           </p>
           <h1 className="mt-4 text-4xl font-semibold tracking-tight sm:text-5xl">{title}</h1>
           <p className="mx-auto mt-5 max-w-xl text-base leading-7 text-muted-foreground sm:text-lg">
@@ -54,7 +55,30 @@ const ErrorPage = ({ status, title, message, details, onHome, onRetry }: ErrorPa
   );
 };
 
+// Thrown when a lazy page's chunk can't be fetched (usually after a new deploy)
+const isChunkError = (error: unknown) =>
+  error instanceof Error &&
+  /dynamically imported module|Importing a module script failed|Unable to preload CSS/i.test(
+    error.message,
+  );
+
+const getErrorDetails = (error: unknown) =>
+  isDevelopment
+    ? error instanceof Error
+      ? `${error.name}: ${error.message}\n\n${error.stack ?? ""}`
+      : String(error)
+    : undefined;
+
 const getRouteErrorContent = (error: unknown) => {
+  if (isChunkError(error)) {
+    return {
+      status: undefined,
+      title: "A new version is available.",
+      message: "The app was updated. Please reload the page to continue.",
+      details: getErrorDetails(error),
+    };
+  }
+
   if (isRouteErrorResponse(error)) {
     const status = error.status;
     const title = status === 404 ? "We couldn’t find that page." : "Something went wrong.";
@@ -70,18 +94,13 @@ const getRouteErrorContent = (error: unknown) => {
     return { status, title, message, details };
   }
 
-  const details = isDevelopment
-    ? error instanceof Error
-      ? `${error.name}: ${error.message}\n\n${error.stack ?? ""}`
-      : String(error)
-    : undefined;
   return {
     status: 500,
     title: "Something went wrong.",
     message: isDevelopment
       ? "An unexpected error occurred while rendering this page."
       : "We couldn’t load this page. Please try again or return to the home page.",
-    details,
+    details: getErrorDetails(error),
   };
 };
 
@@ -114,23 +133,14 @@ export class OuterErrorBoundary extends Component<
     } else {
       console.error("Unhandled application error");
     }
+    // TODO: Send error to Sentry or other error tracking service
   }
 
   render() {
     if (this.state.error) {
-      const details = isDevelopment
-        ? `${this.state.error.name}: ${this.state.error.message}\n\n${this.state.error.stack ?? ""}`
-        : undefined;
       return (
         <ErrorPage
-          status={500}
-          title="Something went wrong."
-          message={
-            isDevelopment
-              ? "An unexpected error occurred while rendering this page."
-              : "We couldn’t load this page. Please try again or return to the home page."
-          }
-          details={details}
+          {...getRouteErrorContent(this.state.error)}
           onHome={() => window.location.assign("/")}
           onRetry={() => window.location.reload()}
         />

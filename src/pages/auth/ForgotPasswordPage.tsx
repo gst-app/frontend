@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ROUTES } from "@/config/routes";
 import ForgotPasswordForm from "@/features/auth/components/ForgotPasswordForm";
 import { useMediaQuery } from "@/hooks/use-media-query";
-import AuthLayout from "@/layouts/AuthLayout";
+import AuthLayout from "@/components/layouts/AuthLayout";
 
 const ForgotPasswordPage = () => {
   const isMobile = useMediaQuery("(max-width: 1023px)");
