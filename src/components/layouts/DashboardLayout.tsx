@@ -15,7 +15,7 @@ const DashboardLayout = ({ navItems }: PropTypes) => {
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">
         <DashboardTopbar items={navItems} />
-        <main className="p-4 lg:p-6">
+        <main className="p-5 lg:p-6 h-full overflow-y-auto">
           <Outlet />
         </main>
       </div>
