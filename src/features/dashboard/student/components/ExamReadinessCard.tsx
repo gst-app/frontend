@@ -1,6 +1,6 @@
 const ExamReadinessCard = () => {
   return (
-    <div className="bg-white rounded-[20px] shadow-[0px_20px_40px_0px_#111E190F] p-6 flex flex-col gap-6 items-center w-full flex-1">
+    <div className="bg-white rounded-card shadow-card p-6 flex flex-col gap-6 items-center w-full flex-1">
       <p className="text-sm font-bold font-manrope text-foreground uppercase tracking-widest">
         Exam Readiness
       </p>

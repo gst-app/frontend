@@ -3,7 +3,7 @@ import { Rocket } from "lucide-react";
 
 const WelcomeHero = () => {
   return (
-    <div className="bg-[#E8F7EF] p-8 rounded-[20px] flex flex-col gap-8 justify-between flex-1">
+    <div className="bg-[#E8F7EF] p-8 rounded-card flex flex-col gap-8 justify-between flex-1">
       <div className="flex flex-col gap-2">
         <h2 className="font-manrope font-extrabold text-3xl sm:text-4xl leading-11">
           Welcome back, Ebuka 👋

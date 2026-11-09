@@ -5,6 +5,7 @@
 :root {
   --background: #ffffff;
   --foreground: #3d4a3d;
+  --semi-black: #111e19;
   --card: #ffffff;
   --card-foreground: #3d4a3d;
   --popover: #ffffff;
@@ -95,6 +96,7 @@
   --color-background: var(--background);
   --color-topbar: var(--topbar);
   --color-hero-tint: var(--hero-tint);
+  --color-semi-black: var(--semi-black);
   --background-image-sidebar-surface: var(--sidebar-surface);
   --radius-sm: 4px;
   --radius-md: 6px;
@@ -102,8 +104,10 @@
   --radius-xl: 12px;
   --radius-2xl: 16px;
   --radius-3xl: 24px;
+  --radius-card: 20px;
   --shadow-button-primary: 0 2px 0 #004d1f;
   --shadow-button-secondary: 0 2px 0 #3a9d4f;
+  --shadow-card: 0px 20px 40px 0px #111e190f;
   --animate-progress: progress 1s ease-in-out infinite;
   --animate-float: float 3s ease-in-out infinite;
   --animate-slide-up: slide-up 0.3s ease-out;
