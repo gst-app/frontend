@@ -4,6 +4,7 @@ import { Component, type ErrorInfo, type ReactNode } from "react";
 import { isRouteErrorResponse, useNavigate, useRouteError } from "react-router";
 import { Button } from "@/components/ui/button";
 import { isDevelopment } from "@/config/environment";
+import { OfflinePage } from "@/components/common/OfflinePage";
 
 type ErrorPageProps = {
   status?: number;
@@ -107,6 +108,9 @@ const getRouteErrorContent = (error: unknown) => {
 const GlobalErrorBoundary = () => {
   const error = useRouteError();
   const navigate = useNavigate();
+
+  if (!navigator.onLine) return <OfflinePage />;
+
   const content = getRouteErrorContent(error);
 
   return (
@@ -138,6 +142,8 @@ export class OuterErrorBoundary extends Component<
 
   render() {
     if (this.state.error) {
+      if (!navigator.onLine) return <OfflinePage />;
+
       return (
         <ErrorPage
           {...getRouteErrorContent(this.state.error)}

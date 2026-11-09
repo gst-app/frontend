@@ -4,6 +4,11 @@ import App from "./App.tsx";
 import "./index.css";
 import { Providers } from "@/providers.tsx";
 
+// Reload the page if a lazy page's chunk can't be fetched (usually after a new deploy). Only do this if the user is online, otherwise show the offline page.
+window.addEventListener("vite:preloadError", () => {
+  if (navigator.onLine) window.location.reload();
+});
+
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <Providers>
@@ -11,6 +16,3 @@ createRoot(document.getElementById("root")!).render(
     </Providers>
   </StrictMode>,
 );
-
-// Reload the page if there is a preload error. This can happen if the user has a stale service worker that has cached an old version of the app. The new version of the app will be loaded after the page is reloaded.
-window.addEventListener("vite:preloadError", () => window.location.reload());
