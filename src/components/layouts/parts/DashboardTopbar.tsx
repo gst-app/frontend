@@ -39,7 +39,7 @@ const DashboardTopbar = ({ items }: PropTypes) => {
                   />
                 }
               >
-                <Menu aria-hidden="true" className="shrink-0" size={6} />
+                <Menu aria-hidden="true" className="shrink-0 size-5" />
               </SheetTrigger>
               <SheetContent
                 side="left"
