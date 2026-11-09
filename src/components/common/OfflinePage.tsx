@@ -1,4 +1,3 @@
-// components/common/OfflinePage.tsx
 import { useEffect, useState } from "react";
 import { CloudOff, Plane, RefreshCw, Router, Wifi } from "lucide-react";
 import { Button } from "@/components/ui/button";

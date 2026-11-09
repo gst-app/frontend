@@ -1,12 +1,16 @@
 import { useState } from "react";
-import { Bell, CircleHelp, Menu, Search, UserRound } from "lucide-react";
+import { Bell, CircleHelp, LogOut, Menu, Search, Settings } from "lucide-react";
 import { NavLink } from "react-router";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import Avatar from "@/components/custom/AvatarV1";
 import DashboardSidebar from "@/components/layouts/parts/DashboardSidebar";
 import type { NavItem } from "@/components/layouts/nav.types";
+import { ROUTES } from "@/config/routes";
+import { useLogout } from "@/features/auth/hooks/use-logout";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import { useAuthStore } from "@/stores/auth.store";
 
 interface PropTypes {
   items: NavItem[];
@@ -15,6 +19,9 @@ interface PropTypes {
 const DashboardTopbar = ({ items }: PropTypes) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const isMobile = useMediaQuery("(max-width: 1023px)");
+  const user = useAuthStore((state) => state.user);
+  const { mutate: logout, isPending: isLoggingOut } = useLogout();
+  const username = user?.username || "User";
 
   return (
     <header className="sticky top-0 z-40 border-b border-border/70 bg-topbar/95 backdrop-blur-sm">
@@ -101,14 +108,51 @@ const DashboardTopbar = ({ items }: PropTypes) => {
           >
             <CircleHelp aria-hidden="true" />
           </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="shrink-0 rounded-full bg-background/70"
-            aria-label="Your profile"
-          >
-            <UserRound aria-hidden="true" />
-          </Button>
+
+          <details className="group relative shrink-0">
+            <summary
+              className="grid size-10 cursor-pointer list-none place-items-center rounded-full bg-background/70 p-0 ring-1 ring-border/70 outline-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden"
+              aria-label={`Open account menu for ${username}`}
+            >
+              <Avatar
+                image={user?.profileImage ?? undefined}
+                name={username}
+                alt={username}
+                className="size-9"
+              />
+            </summary>
+            <div
+              className="absolute right-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-md border border-border bg-popover p-1 text-popover-foreground shadow-md"
+              role="menu"
+              aria-label="Account menu"
+            >
+              <div className="truncate px-2 py-2 text-sm font-semibold text-foreground">
+                {username}
+              </div>
+              <div className="my-1 h-px bg-border" aria-hidden="true" />
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-9 w-full justify-start rounded-sm px-2 text-left font-normal"
+                icon={<Settings className="size-4" aria-hidden="true" />}
+                render={<NavLink to={ROUTES.STUDENT.PROFILE} role="menuitem" />}
+              >
+                Profile settings
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-9 w-full justify-start rounded-sm px-2 text-left font-normal hover:bg-destructive/10 hover:font-medium hover:text-destructive"
+                role="menuitem"
+                icon={<LogOut className="size-4 text-destructive" aria-hidden="true" />}
+                onClick={() => logout()}
+                disabled={isLoggingOut}
+              >
+                {isLoggingOut ? "Logging out..." : "Log out"}
+              </Button>
+            </div>
+          </details>
         </div>
       </div>
     </header>
