@@ -17,7 +17,7 @@ const StudentDashboardPage = () => {
         </div>
       </div>
 
-      <div className="grid lg:grid-cols-3 grid-cols-1 gap-x-6 gap-y-8 w-full">
+      <div className="grid md:grid-cols-3 grid-cols-1 gap-x-6 gap-y-8 w-full">
         <PerformanceTrendCard />
         <WeakTopicsCard />
         <RecentActivityCard />
